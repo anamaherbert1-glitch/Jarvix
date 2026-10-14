@@ -119,6 +119,30 @@ def oauth_start(provider: str, authorization: str | None = Header(default=None))
    params.update({"enable_fb_login":"0","force_authentication":"1"})
  return RedirectResponse(cfg["authorize"] + "?" + urlencode(params),status_code=302)
 
+@app.post("/api/oauth/{provider}/start")
+def oauth_start_url(provider: str, authorization: str | None = Header(default=None)):
+ # Browser admin UIs call this endpoint with the bearer header, then open authorization_url.
+ require_admin(authorization)
+ if provider not in PROVIDERS: raise HTTPException(404,"Réseau non pris en charge.")
+ cfg = PROVIDERS[provider]
+ if cfg["kind"] != "oauth": raise HTTPException(400,"Ce réseau utilise une connexion de bot, pas OAuth utilisateur.")
+ client_id, _ = provider_credentials(provider)
+ state = secrets.token_urlsafe(32)
+ verifier, challenge = pkce_pair()
+ with db() as con:
+  con.execute("INSERT INTO oauth_states(state,provider,verifier,created_at) VALUES(?,?,?,?)",(state,provider,verifier,int(time.time())))
+  con.execute("DELETE FROM oauth_states WHERE created_at < ?",(int(time.time())-600,))
+ params = {"client_id":client_id,"redirect_uri":redirect_uri(provider),"response_type":"code","state":state}
+ if provider == "tiktok":
+  params.update({"client_key":client_id,"scope":",".join(cfg["scopes"]),"code_challenge":challenge,"code_challenge_method":"S256"})
+ else:
+  params["scope"] = " ".join(cfg["scopes"])
+  if provider in {"x","youtube","linkedin"}:
+   params.update({"code_challenge":challenge,"code_challenge_method":"S256"})
+  if provider == "youtube": params.update({"access_type":"offline","include_granted_scopes":"true","prompt":"consent"})
+  if provider == "instagram": params.update({"enable_fb_login":"0","force_authentication":"1"})
+ return {"provider":provider,"authorization_url":cfg["authorize"] + "?" + urlencode(params),"expires_in_seconds":600}
+
 @app.get("/oauth/{provider}/callback",response_class=HTMLResponse)
 async def oauth_callback(provider: str, code: str = Query(default=""), state: str = Query(default=""), error: str = Query(default=""), error_description: str = Query(default="")):
  if provider not in PROVIDERS or PROVIDERS[provider]["kind"] != "oauth": raise HTTPException(404,"Réseau non pris en charge.")
