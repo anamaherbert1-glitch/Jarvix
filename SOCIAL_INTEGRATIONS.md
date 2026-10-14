@@ -94,6 +94,32 @@ Les scopes sont une demande initiale, pas une garantie d'accès. Les portails d�
 
 Le point de départ OAuth est protégé par bearer token; une interface d'administration sécurisée doit appeler le serveur avec cet en-tête puis ouvrir l'URL d'autorisation retournée. Ne mets pas le token d'administration dans l'URL ni dans les journaux.
 
+## Cerveau IA JARVIX
+
+Le module `server/ai_brain.py` ajoute une passerelle vers l'API OpenAI côté serveur :
+
+- `GET /api/ai/status` indique si le service est configuré sans exposer de secret.
+- `POST /api/ai/chat` reçoit `message` et un historique limité à 12 messages, puis renvoie `reply`.
+- Chaque requête exige `Authorization: Bearer <JARVIX_ADMIN_TOKEN>`.
+- Configure `OPENAI_API_KEY` dans les secrets de l'hébergeur et choisis éventuellement `OPENAI_MODEL`. Ne place jamais cette clé dans Android, le dépôt GitHub, une capture d'écran ou un message.
+- `store: false` est envoyé à l'API Responses et le backend ne stocke pas l'historique de chat. Le client peut envoyer les 12 derniers messages pour conserver le contexte.
+- Les demandes de publication, de réponse, d'envoi ou d'autres actions externes sont signalées avec `requires_confirmation`. Les actions réelles restent désactivées : le backend ne publie rien et n'envoie aucun message.
+- Le module ne donne pas encore accès aux commandes vocales Android, aux fichiers ni aux réseaux sociaux. Une interface cliente authentifiée et les adaptateurs autorisés sont nécessaires.
+
+Lancement local du backend depuis le dossier `server` :
+
+    pip install -r requirements-social.txt
+    uvicorn social_oauth:app --host 127.0.0.1 --port 8787
+
+Exemple de requête (avec le jeton d'administration conservé côté serveur/client sécurisé) :
+
+    curl -X POST http://127.0.0.1:8787/api/ai/chat \
+      -H "Authorization: Bearer $JARVIX_ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"message":"Bonjour JARVIX","history":[]}'
+
+Cette commande locale illustre l'API; n'utilise pas HTTP non chiffré sur Internet. En production, HTTPS est obligatoire. Le jeton d'administration ne doit pas être intégré dans l'APK. Pour connecter l'application Android, il faudra une authentification utilisateur propre et une URL HTTPS du backend.
+
 ## Avant la mise en production
 
 1. Configurer le domaine HTTPS, les credentials et les URL de callback.
