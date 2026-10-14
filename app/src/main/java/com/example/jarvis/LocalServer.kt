@@ -27,7 +27,7 @@ object LocalServer {
       if(command.isBlank() || command.length>500) newFixedLengthResponse(Response.Status.BAD_REQUEST,"application/json","{\"error\":\"command must be 1..500 chars\"}")
       else newFixedLengthResponse(Response.Status.OK,"application/json",JSONObject().put("accepted",true).put("command",command).put("message","Commande reçue; aucune action sensible exécutée automatiquement.").toString())
      } catch(_:Exception) { newFixedLengthResponse(Response.Status.BAD_REQUEST,"application/json","{\"error\":\"invalid_json\"}") }
-    } else newFixedLengthResponse(Response.Status.NOT_FOUND,"application/json","{\"error\":\"not_found\"}")
+    } else return newFixedLengthResponse(Response.Status.NOT_FOUND,"application/json","{\"error\":\"not_found\"}")
    }
   }
   server!!.start(NanoHTTPD.SOCKET_READ_TIMEOUT,false)
