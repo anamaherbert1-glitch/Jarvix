@@ -2,6 +2,7 @@ package com.example.jarvis
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,6 +13,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   status = TextView(this).apply { text="SYSTÈME EN ATTENTE\nServeur local arrêté."; textSize=16f; setTextColor(-1); setPadding(0,22,0,22) }
   root.addView(status)
   addButton(root,"🎙 PARLER") { listen() }
+  addButton(root,"🧠 CONFIGURER LE CERVEAU IA") { configureAiBrain() }
   addButton(root,"🖥 DÉMARRER / ARRÊTER LE SERVEUR DU TÉLÉPHONE") { toggleLocalServer() }
   addButton(root,"📂 CHOISIR UN FICHIER") { filePicker.launch(arrayOf("*/*")) }
   addButton(root,"🔔 AUTORISER LES NOTIFICATIONS") { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
@@ -86,7 +89,51 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
    c.contains("serveur")->toggleLocalServer()
    c.contains("heure")->speak("Il est "+SimpleDateFormat("HH:mm",Locale.FRANCE).format(Date()))
    c.contains("date")->speak("Nous sommes le "+SimpleDateFormat("d MMMM yyyy",Locale.FRANCE).format(Date()))
-   else->speak("J’ai reconnu : $raw. Le cerveau IA n’est pas encore connecté.")
+   else->askAi(raw)
+  }
+ }
+ private fun configureAiBrain() {
+  val layout = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(40,16,40,0) }
+  val urlInput = EditText(this).apply {
+   hint = "URL HTTPS du backend"
+   setSingleLine(true)
+   inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+   setText(AiBrainClient.backendUrl(this@MainActivity))
+  }
+  val tokenInput = EditText(this).apply {
+   hint = "Jeton appareil (32 caractères minimum)"
+   setSingleLine(true)
+   inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+  }
+  layout.addView(urlInput)
+  layout.addView(tokenInput)
+  val dialog = AlertDialog.Builder(this)
+   .setTitle("Connexion au cerveau IA")
+   .setMessage("Utilise une URL HTTPS et un jeton appareil dédié fourni par l’administrateur. N’entre pas le jeton administrateur.")
+   .setView(layout)
+   .setNegativeButton("Annuler", null)
+   .setPositiveButton("Enregistrer", null)
+   .create()
+  dialog.setOnShowListener {
+   dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+    val error = AiBrainClient.save(this, urlInput.text.toString(), tokenInput.text.toString())
+    if (error != null) { update(error) }
+    else { update("Configuration IA enregistrée sur cet appareil."); speak("Le cerveau IA est configuré."); dialog.dismiss() }
+   }
+  }
+  dialog.show()
+ }
+
+ private fun askAi(message: String) {
+  if (!AiBrainClient.isConfigured(this)) {
+   update("Le cerveau IA n’est pas configuré. Appuie sur CONFIGURER LE CERVEAU IA.")
+   speak("Configure d’abord le cerveau IA.")
+   return
+  }
+  update("JARVIX réfléchit…")
+  AiBrainClient.ask(this, message) { reply ->
+   update(reply)
+   if (ttsReady) tts.speak(reply, TextToSpeech.QUEUE_FLUSH, null, "jarvix-ai-reply")
   }
  }
  private fun readLatestNotification() {
