@@ -17,6 +17,9 @@ Le fichier server/server.py utilise Python standard. Installe Python 3 et défin
 ## Connexions sociales officielles
 Le socle OAuth serveur et la documentation sont dans server/social_oauth.py et SOCIAL_INTEGRATIONS.md. Il utilise les pages OAuth officielles et chiffre les jetons stockés. Aucun compte n'est connecté automatiquement, aucun mot de passe social n'est demandé, et les actions de publication/messages ne sont pas encore exécutées par les adaptateurs API. Il faut configurer les applications développeur, les secrets et un domaine HTTPS; voir SOCIAL_INTEGRATIONS.md.
 
+## Cerveau IA
+Le backend comprend `server/ai_brain.py` : API de conversation protégée, clé IA conservée côté serveur, historique non stocké, et garde-fou qui signale les demandes d'actions sensibles. Configure `OPENAI_API_KEY` et `OPENAI_MODEL` dans les secrets de l'hébergement. Le cerveau n'est pas encore branché à l'interface Android; aucune publication ou aucun message social n'est exécuté. Voir `SOCIAL_INTEGRATIONS.md`.
+
 ## Limites
 - Le serveur ordinateur et l'application Android ne sont pas encore reliés automatiquement.
 - Le serveur local reçoit les commandes mais n'exécute aucune commande système arbitraire.
