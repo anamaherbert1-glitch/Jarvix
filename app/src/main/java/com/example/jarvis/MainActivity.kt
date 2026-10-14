@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   addButton(root, "🎙 PARLER") { listen() }
   addButton(root, "📂 CHOISIR UN FICHIER") { filePicker.launch(arrayOf("*/*")) }
   addButton(root, "🔔 AUTORISER LES NOTIFICATIONS") { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+  addButton(root, "🔊 LIRE LA DERNIÈRE NOTIFICATION") { readLatestNotification() }
   addButton(root, "💬 OUVRIR WHATSAPP") { openPackage("com.whatsapp", "WhatsApp") }
   addButton(root, "🌐 OUVRIR CHROME") { openPackage("com.android.chrome", "Chrome") }
   addButton(root, "▶ OUVRIR YOUTUBE") { openPackage("com.google.android.youtube", "YouTube") }
@@ -71,12 +72,19 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
    command.contains("chrome") || command.contains("navigateur") -> openPackage("com.android.chrome", "Chrome")
    command.contains("youtube") -> openPackage("com.google.android.youtube", "YouTube")
    command.contains("fichier") || command.contains("document") || command.contains("photo") -> filePicker.launch(arrayOf("*/*"))
-   command.contains("notification") -> startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+   command.contains("notification") -> readLatestNotification()
    command.contains("heure") -> speak("Il est " + SimpleDateFormat("HH:mm", Locale.FRANCE).format(Date()))
    command.contains("date") -> speak("Nous sommes le " + SimpleDateFormat("d MMMM yyyy", Locale.FRANCE).format(Date()))
-   command.contains("aide") -> speak("Tu peux me demander d’ouvrir WhatsApp, Chrome ou YouTube, de choisir un fichier ou de régler l’accès aux notifications.")
+   command.contains("aide") -> speak("Tu peux me demander d’ouvrir WhatsApp, Chrome ou YouTube, de choisir un fichier ou de lire la dernière notification après autorisation.")
    else -> speak("J’ai reconnu : " + raw + ". Mon cerveau IA n’est pas encore connecté.")
   }
+ }
+ private fun readLatestNotification() {
+  val latest = JarvisNotificationListener.latest(this)
+  if (latest.isBlank()) {
+   update("Aucune notification disponible. Active l’accès dans les paramètres Android et attends une nouvelle notification.")
+   speak("Aucune notification disponible.")
+  } else speak("Dernière notification. " + latest)
  }
  private fun openPackage(packageName: String, appName: String) {
   val launch = packageManager.getLaunchIntentForPackage(packageName)
