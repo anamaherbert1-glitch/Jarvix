@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -25,6 +26,8 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
  private lateinit var status: TextView
+ private lateinit var bubble: LivingBubbleView
+ private lateinit var bubbleLabel: TextView
  private lateinit var tts: TextToSpeech
  private var ttsReady = false
  private var serverOn = false
@@ -48,6 +51,16 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   tts = TextToSpeech(this, this)
   val root = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(28,36,28,28); setBackgroundColor(android.graphics.Color.rgb(5,10,20)) }
   root.addView(TextView(this).apply { text="J.A.R.V.I.S"; textSize=30f; setTextColor(android.graphics.Color.rgb(78,190,255)) })
+  bubble = LivingBubbleView(this)
+  root.addView(bubble, LinearLayout.LayoutParams(-1, dp(240)))
+  bubbleLabel = TextView(this).apply {
+   text = "EN ATTENTE • TOUCHE PARLER"
+   textSize = 12f
+   gravity = android.view.Gravity.CENTER
+   setTextColor(android.graphics.Color.rgb(125,190,255))
+   setPadding(0, 0, 0, dp(12))
+  }
+  root.addView(bubbleLabel)
   status = TextView(this).apply { text="SYSTÈME EN ATTENTE\nServeur local arrêté."; textSize=16f; setTextColor(-1); setPadding(0,22,0,22) }
   root.addView(status)
   addButton(root,"🎙 PARLER") { listen() }
@@ -76,10 +89,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED) { microphonePermission.launch(Manifest.permission.RECORD_AUDIO); return }
   if (!SpeechRecognizer.isRecognitionAvailable(this)) { update("Aucun service vocal disponible."); return }
   val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply { putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM); putExtra(RecognizerIntent.EXTRA_LANGUAGE,"fr-FR"); putExtra(RecognizerIntent.EXTRA_PROMPT,"Parle à JARVIS") }
-  try { voiceLauncher.launch(intent); update("Écoute en cours…") } catch(_: ActivityNotFoundException) { update("Service vocal introuvable.") }
+  try { voiceLauncher.launch(intent); setBubbleMood(LivingBubbleView.Mood.LISTENING, "JE T’ÉCOUTE"); update("Écoute en cours…") } catch(_: ActivityNotFoundException) { update("Service vocal introuvable.") }
  }
  private fun handleCommand(raw:String) {
-  val c=raw.lowercase(Locale.FRENCH); update("COMMANDE : $raw")
+  val c=raw.lowercase(Locale.FRENCH); reactToText(c); update("COMMANDE : $raw")
   when {
    c.contains("whatsapp")->openPackage("com.whatsapp","WhatsApp")
    c.contains("chrome")||c.contains("navigateur")->openPackage("com.android.chrome","Chrome")
@@ -130,6 +143,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
    speak("Configure d’abord le cerveau IA.")
    return
   }
+  setBubbleMood(LivingBubbleView.Mood.THINKING, "JE RÉFLÉCHIS")
   update("JARVIX réfléchit…")
   AiBrainClient.ask(this, message) { reply ->
    update(reply)
@@ -146,8 +160,42 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   if(launch!=null) { startActivity(launch); update("Ouverture de "+appName); speak("J’ouvre "+appName) }
   else { update(appName+" n’est pas installé ou accessible."); speak(appName+" n’est pas disponible.") }
  }
+ private fun reactToText(text: String) {
+  when {
+   listOf("merci", "super", "génial", "genial", "bravo", "content", "heureux", "parfait").any { text.contains(it) } ->
+    setBubbleMood(LivingBubbleView.Mood.HAPPY, "JE RESSENS UN TON POSITIF")
+   listOf("triste", "peur", "stress", "inquiet", "inquiète", "aide-moi", "aide moi", "problème", "probleme", "fatigué", "fatigue").any { text.contains(it) } ->
+    setBubbleMood(LivingBubbleView.Mood.CONCERNED, "JE T’ÉCOUTE AVEC ATTENTION")
+   listOf("calme", "doucement", "tranquille", "respire").any { text.contains(it) } ->
+    setBubbleMood(LivingBubbleView.Mood.CALM, "MODE CALME")
+   else -> setBubbleMood(LivingBubbleView.Mood.THINKING, "J’ANALYSE TA DEMANDE")
+  }
+ }
+
+ private fun setBubbleMood(mood: LivingBubbleView.Mood, label: String) {
+  if (::bubble.isInitialized) bubble.setMood(mood)
+  if (::bubbleLabel.isInitialized) bubbleLabel.text = label
+ }
+
+ private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
  private fun update(message:String) { status.text=message }
- private fun speak(message:String) { if(ttsReady) tts.speak(message,TextToSpeech.QUEUE_FLUSH,null,"jarvis-utterance"); update(message) }
- override fun onInit(statusCode:Int) { ttsReady=statusCode==TextToSpeech.SUCCESS; if(ttsReady) tts.language=Locale.FRENCH }
+ private fun speak(message:String) {
+  setBubbleMood(LivingBubbleView.Mood.SPEAKING, "JE TE RÉPONDS")
+  if(ttsReady) tts.speak(message,TextToSpeech.QUEUE_FLUSH,null,"jarvis-utterance")
+  update(message)
+ }
+ override fun onInit(statusCode:Int) {
+  ttsReady=statusCode==TextToSpeech.SUCCESS
+  if(ttsReady) {
+   tts.language=Locale.FRENCH
+   tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+    override fun onStart(utteranceId: String?) { runOnUiThread { setBubbleMood(LivingBubbleView.Mood.SPEAKING, "JE TE RÉPONDS") } }
+    override fun onDone(utteranceId: String?) { runOnUiThread { setBubbleMood(LivingBubbleView.Mood.IDLE, "EN ATTENTE • TOUCHE PARLER") } }
+    @Deprecated("Deprecated in Java")
+    override fun onError(utteranceId: String?) { runOnUiThread { setBubbleMood(LivingBubbleView.Mood.IDLE, "JE SUIS LÀ") } }
+   })
+  }
+ }
  override fun onDestroy() { LocalServer.stop(); if(::tts.isInitialized) { tts.stop(); tts.shutdown() }; super.onDestroy() }
 }
