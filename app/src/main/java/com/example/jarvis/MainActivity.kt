@@ -32,6 +32,9 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
    if (command.isNotBlank()) handleCommand(command) else update("Je n’ai pas entendu de commande.")
   } else update("Reconnaissance vocale annulée ou indisponible.")
  }
+ private val microphonePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+  if (granted) listen() else update("Permission microphone refusée.")
+ }
  private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
   if (uri != null) {
    try { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) {}
@@ -67,7 +70,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   else { LocalServer.stop(); serverOn=false; update("Serveur du téléphone arrêté.") }
  }
  private fun listen() {
-  if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED) { requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),41); return }
+  if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED) { microphonePermission.launch(Manifest.permission.RECORD_AUDIO); return }
   if (!SpeechRecognizer.isRecognitionAvailable(this)) { update("Aucun service vocal disponible."); return }
   val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply { putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM); putExtra(RecognizerIntent.EXTRA_LANGUAGE,"fr-FR"); putExtra(RecognizerIntent.EXTRA_PROMPT,"Parle à JARVIS") }
   try { voiceLauncher.launch(intent); update("Écoute en cours…") } catch(_: ActivityNotFoundException) { update("Service vocal introuvable.") }
@@ -99,10 +102,5 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
  private fun update(message:String) { status.text=message }
  private fun speak(message:String) { if(ttsReady) tts.speak(message,TextToSpeech.QUEUE_FLUSH,null,"jarvis-utterance"); update(message) }
  override fun onInit(statusCode:Int) { ttsReady=statusCode==TextToSpeech.SUCCESS; if(ttsReady) tts.language=Locale.FRENCH }
- @Deprecated("Deprecated in Android API; retained for compatibility")
- override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
-  super.onRequestPermissionsResult(requestCode,permissions,grantResults)
-  if(requestCode==41 && grantResults.firstOrNull()==PackageManager.PERMISSION_GRANTED) listen() else if(requestCode==41) update("Permission microphone refusée.")
- }
  override fun onDestroy() { LocalServer.stop(); if(::tts.isInitialized) { tts.stop(); tts.shutdown() }; super.onDestroy() }
 }
