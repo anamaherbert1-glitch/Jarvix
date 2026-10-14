@@ -85,7 +85,8 @@ Les scopes sont une demande initiale, pas une garantie d'accès. Les portails d�
 - GET /health : vérification technique.
 - GET /api/social/providers : fournisseurs et capacités indicatives; protégé.
 - GET /api/social/status : état des connexions sans révéler les jetons; protégé.
-- GET /oauth/{provider}/start : prépare puis ouvre le flux OAuth; protégé par secret d'administration.
+- GET /oauth/{provider}/start : démarre le flux par redirection; protégé par secret d'administration.
+- POST /api/oauth/{provider}/start : renvoie authorization_url à une interface sécurisée qui fournit le bearer token; l'interface ouvre ensuite cette URL.
 - GET /oauth/{provider}/callback : callback OAuth public, protégé par state à usage unique.
 - POST /api/actions/draft : crée un brouillon pour publish_post, publish_video, reply_comment ou send_message.
 - POST /api/actions/{id}/confirm : enregistre la confirmation mais n'exécute pas encore l'action.
