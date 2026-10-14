@@ -184,7 +184,9 @@ def _store_token(provider: str, token_data: dict[str, Any]):
  if not access_token: raise HTTPException(502,"Le fournisseur n'a pas renvoyé de jeton d'accès.")
  cipher = encryption()
  nonce = secrets.token_bytes(12)
- encrypted = nonce + cipher.encrypt(nonce,access_token.encode(),provider.encode())
+ # Encrypt the complete token response so a refresh token, when supplied, is not discarded.
+ secret_bundle = json.dumps({k:token_data[k] for k in ("access_token","refresh_token","token_type","scope","expires_in") if k in token_data},separators=(",",":")).encode()
+ encrypted = nonce + cipher.encrypt(nonce,secret_bundle,provider.encode())
  expires = token_data.get("expires_in")
  with db() as con:
   con.execute("""INSERT INTO social_tokens(provider,encrypted_token,token_type,scope,expires_at,connected_at)
