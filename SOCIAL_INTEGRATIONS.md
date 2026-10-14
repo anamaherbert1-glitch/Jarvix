@@ -31,12 +31,13 @@ Pour un test local seulement :
 
     uvicorn social_oauth:app --host 127.0.0.1 --port 8787
 
-En production, exécute derrière un reverse proxy HTTPS (Caddy/Nginx ou un hébergeur HTTPS). N'expose pas directement le serveur de développement sur Internet. L'APK Android n'est pas encore relié à ce backend : il faut une interface d'administration HTTPS pour démarrer OAuth et consulter les connexions.
+En production, exécute derrière un reverse proxy HTTPS (Caddy/Nginx ou un hébergeur HTTPS). N'expose pas directement le serveur de développement sur Internet. L'APK Android peut appeler le cerveau IA via HTTPS avec un jeton appareil dédié chiffré dans Android Keystore.
 
 ## Variables secrètes à configurer
 
 - JARVIX_PUBLIC_BASE_URL : URL HTTPS publique du backend, sans slash final.
 - JARVIX_ADMIN_TOKEN : secret aléatoire d'au moins 32 caractères.
+- JARVIX_DEVICE_TOKENS : un ou plusieurs secrets d'au moins 32 caractères pour le chat IA Android, séparés par des virgules; ne réutilise jamais le jeton admin.
 - JARVIX_TOKEN_ENCRYPTION_KEY : clé de 32 octets encodée en base64 URL-safe.
 - META_GRAPH_VERSION : version Graph API configurée dans l'app Meta.
 - FACEBOOK_APP_ID et FACEBOOK_APP_SECRET.
@@ -100,11 +101,11 @@ Le module `server/ai_brain.py` ajoute une passerelle vers l'API OpenAI côté se
 
 - `GET /api/ai/status` indique si le service est configuré sans exposer de secret.
 - `POST /api/ai/chat` reçoit `message` et un historique limité à 12 messages, puis renvoie `reply`.
-- Chaque requête exige `Authorization: Bearer <JARVIX_ADMIN_TOKEN>`.
+- L’interface d’administration utilise `JARVIX_ADMIN_TOKEN`; Android utilise un jeton distinct listé dans `JARVIX_DEVICE_TOKENS`. Ces jetons appareil autorisent uniquement les routes IA, pas les routes sociales d’administration.
 - Configure `OPENAI_API_KEY` dans les secrets de l'hébergeur et choisis éventuellement `OPENAI_MODEL`. Ne place jamais cette clé dans Android, le dépôt GitHub, une capture d'écran ou un message.
 - `store: false` est envoyé à l'API Responses et le backend ne stocke pas l'historique de chat. Le client peut envoyer les 12 derniers messages pour conserver le contexte.
 - Les demandes de publication, de réponse, d'envoi ou d'autres actions externes sont signalées avec `requires_confirmation`. Les actions réelles restent désactivées : le backend ne publie rien et n'envoie aucun message.
-- Le module ne donne pas encore accès aux commandes vocales Android, aux fichiers ni aux réseaux sociaux. Une interface cliente authentifiée et les adaptateurs autorisés sont nécessaires.
+- Les commandes vocales inconnues de l’application Android peuvent être envoyées au backend HTTPS configuré dans l’application. Les actions sociales, l’accès distant aux fichiers et les commandes système restent désactivés.
 
 Lancement local du backend depuis le dossier `server` :
 
