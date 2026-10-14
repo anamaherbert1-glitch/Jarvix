@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 router = APIRouter(tags=["ai-brain"])
 ADMIN_TOKEN = os.environ.get("JARVIX_ADMIN_TOKEN", "")
+DEVICE_TOKENS = [item.strip() for item in os.environ.get("JARVIX_DEVICE_TOKENS", "").split(",") if len(item.strip()) >= 32]
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
@@ -40,11 +41,13 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=6000)
     history: list[ChatMessage] = Field(default_factory=list, max_length=12)
 
-def require_admin(authorization: str | None) -> None:
+def require_client(authorization: str | None) -> None:
+    """Accept admin access or a separately provisioned device token for AI routes only."""
     if not ADMIN_TOKEN or len(ADMIN_TOKEN) < 32:
-        raise HTTPException(503, "Le cerveau JARVIX nécessite JARVIX_ADMIN_TOKEN (32 caractères minimum).")
+        raise HTTPException(503, "Le backend nécessite JARVIX_ADMIN_TOKEN (32 caractères minimum).")
     supplied = (authorization or "").removeprefix("Bearer ").strip()
-    if not hmac.compare_digest(supplied, ADMIN_TOKEN):
+    candidates = ([ADMIN_TOKEN] if len(ADMIN_TOKEN) >= 32 else []) + DEVICE_TOKENS
+    if not any(hmac.compare_digest(supplied, candidate) for candidate in candidates):
         raise HTTPException(401, "Non autorisé.")
 
 def sensitive_intent(message: str) -> bool:
@@ -54,7 +57,7 @@ def sensitive_intent(message: str) -> bool:
 
 @router.get("/api/ai/status")
 def ai_status(authorization: str | None = Header(default=None)):
-    require_admin(authorization)
+    require_client(authorization)
     return {
         "service": "JARVIX AI Brain",
         "configured": bool(OPENAI_API_KEY),
