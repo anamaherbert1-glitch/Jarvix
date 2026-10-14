@@ -20,6 +20,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Check Python backend syntax
+        run: python -m py_compile server/social_oauth.py server/ai_brain.py server/server.py
       - name: Build debug APK
         run: gradle :app:assembleDebug
       - name: Upload APK artifact
