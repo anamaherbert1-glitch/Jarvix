@@ -108,7 +108,7 @@ class FloatingBubbleService : Service() {
  private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
  override fun onDestroy() {
-  orb?.let { runCatching { windowManager.removeView(it) }; it.onDetachedFromWindow() }
+  orb?.let { runCatching { windowManager.removeView(it) } }
   orb = null
   isRunning = false
   super.onDestroy()
