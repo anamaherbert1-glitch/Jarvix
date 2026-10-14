@@ -34,6 +34,8 @@ PROVIDERS: dict[str, dict[str, Any]] = {
  "telegram": {"label":"Telegram Bot API","kind":"manual_bot","features":["bot_messages","bot_updates"],"note":"Telegram Bot API n'utilise pas OAuth utilisateur. Crée un bot via @BotFather; cela ne connecte pas ton compte personnel."}
 }
 app = FastAPI(title="JARVIX Social Connect", version="0.1.0", docs_url=None, redoc_url=None)
+from ai_brain import router as ai_router
+app.include_router(ai_router)
 
 def db():
  DB_PATH.parent.mkdir(parents=True, exist_ok=True)
