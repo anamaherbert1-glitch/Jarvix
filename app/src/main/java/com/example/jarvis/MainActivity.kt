@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   status = TextView(this).apply { text="SYSTÈME EN ATTENTE\nServeur local arrêté."; textSize=16f; setTextColor(-1); setPadding(0,22,0,22) }
   root.addView(status)
   addButton(root,"🎙 PARLER") { listen() }
+  addButton(root,"🫧 ACTIVER LA BULLE FLOTTANTE") { toggleFloatingBubble() }
   addButton(root,"🧠 CONFIGURER LE CERVEAU IA") { configureAiBrain() }
   addButton(root,"🖥 DÉMARRER / ARRÊTER LE SERVEUR DU TÉLÉPHONE") { toggleLocalServer() }
   addButton(root,"📂 CHOISIR UN FICHIER") { filePicker.launch(arrayOf("*/*")) }
@@ -76,6 +77,25 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
  }
  private fun addButton(root: LinearLayout,label: String,action: () -> Unit) {
   root.addView(Button(this).apply { text=label; setOnClickListener { action() } },LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=10 })
+ }
+ private fun toggleFloatingBubble() {
+  if (android.provider.Settings.canDrawOverlays(this)) {
+   val intent = Intent(this, FloatingBubbleService::class.java)
+   if (FloatingBubbleService.isRunning) {
+    stopService(intent)
+    update("Bulle flottante désactivée.")
+   } else {
+    startService(intent)
+    update("Bulle flottante activée. Touche-la pour revenir à JARVIX ; maintiens-la pour la fermer.")
+   }
+  } else {
+   update("Autorise l’affichage par-dessus les autres applications pour activer la bulle.")
+   try {
+    startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+   } catch (_: Exception) {
+    update("Ouvre Paramètres Android et autorise JARVIX à s’afficher par-dessus les autres applications.")
+   }
+  }
  }
  private fun toggleLocalServer() {
   if (!serverOn) try {
@@ -175,6 +195,13 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
  private fun setBubbleMood(mood: LivingBubbleView.Mood, label: String) {
   if (::bubble.isInitialized) bubble.setMood(mood)
   if (::bubbleLabel.isInitialized) bubbleLabel.text = label
+  if (FloatingBubbleService.isRunning) {
+   val overlayIntent = Intent(this, FloatingBubbleService::class.java).apply {
+    action = FloatingBubbleService.ACTION_SET_MOOD
+    putExtra(FloatingBubbleService.EXTRA_MOOD, mood.name)
+   }
+   try { startService(overlayIntent) } catch (_: Exception) {}
+  }
  }
 
  private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
