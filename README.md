@@ -2,47 +2,44 @@
 
 Assistant personnel **PC** (interface graphique) + option Android.
 
-## Installation PC (recommandé)
+## Installation PC
 
-1. Télécharge le dépôt (Code → Download ZIP) ou clone
-2. Décompresse
-3. Double-clique sur **`LANCER_JARVIX.bat`**
-4. Si besoin, lance d’abord **`DIAGNOSTIC.bat`**
+1. **Code** → **Download ZIP** (ou clone)
+2. Décompresse le dossier
+3. Double-clique **`DIAGNOSTIC.bat`** (vérifie Python)
+4. Double-clique **`LANCER_JARVIX.bat`**
 
-Installation complète (raccourci Bureau) : **`INSTALLER_JARVIX.bat`**
-
-### Prérequis
-- Python 3 : https://www.python.org/downloads/ (coche **Add python.exe to PATH**)
-- Internet pour la recherche web et la reconnaissance vocale
+### Python requis
+https://www.python.org/downloads/  
+Coche **Add python.exe to PATH**
 
 ```bat
 cd server
 pip install pyttsx3 SpeechRecognition pyaudio ddgs
+```
+
+Puis, si les modules complets sont présents :
+```bat
 python jarvix_gui.py
 ```
 
-### Fonctionnalités PC
-- Interface graphique (chat, boutons)
-- Cerveau IA local (`server/ai_brain_local.py`)
-- Apprentissage via fichiers dans `server/knowledge/`
-- Recherche web **Google** (prioritaire) + DuckDuckGo
-- Ouverture du navigateur
-- Micro + synthèse vocale
-- Commande **stop** pour couper la voix
-
-### Fichiers utiles
+### Fichiers d'aide
 | Fichier | Rôle |
 |---------|------|
-| `LANCER_JARVIX.bat` | Lance l’interface |
-| `DIAGNOSTIC.bat` | Vérifie Python et les modules |
-| `INSTALLER_JARVIX.bat` | Installe + raccourcis |
-| `server/jarvix_gui.py` | Interface graphique |
-| `server/jarvix_pc.py` | Mode terminal |
-| `server/voice_engine.py` | Micro + voix |
-| `server/web_tools.py` | Recherche Google / web |
+| `LANCER_JARVIX.bat` | Lance JARVIX |
+| `DIAGNOSTIC.bat` | Diagnostic (fenêtre qui reste ouverte) |
+| `LISEZMOI_INSTALLATION.txt` | Instructions |
+| `DESINSTALLER_JARVIX.bat` | Désinstallation |
 
-## Android (optionnel)
-Build APK via GitHub Actions : workflow **Build JARVIS APK**.
+### Fonctionnalités prévues
+- Interface graphique (chat, boutons)
+- Cerveau IA local + knowledge/
+- Recherche Google / web
+- Micro + voix + commande stop
 
-## Licence / limites
-Prototype. Aucune action sensible automatique. La recherche web nécessite Internet.
+## Android
+Workflow GitHub Actions : **Build JARVIS APK**
+
+## Note développement
+Les scripts d'installation et le README sont à jour sur `main`.  
+Les modules Python complets (`jarvix_gui.py`, `ai_brain_local.py`, etc.) sont fournis dans les livraisons ZIP de développement ; finalisation progressive sur le dépôt.
