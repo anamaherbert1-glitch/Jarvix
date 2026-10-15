@@ -1,0 +1,40 @@
+"""
+JARVIX — Cerveau IA 100 % local (aucune API externe)
+
+- Personnalité JARVIX francophone
+- Apprentissage local : lit les fichiers .txt / .md placés dans server/knowledge/
+- Aucune connexion internet requise pour le cerveau
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import random
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+
+# ─────────────────────────────────────────────
+# Chemins
+# ─────────────────────────────────────────────
+
+BASE_DIR = Path(__file__).resolve().parent
+KNOWLEDGE_DIR = BASE_DIR / "knowledge"
+
+
+# ─────────────────────────────────────────────
+# Chargement des connaissances locales
+# ─────────────────────────────────────────────
+
+_knowledge_cache: list[dict] = []
+_knowledge_loaded_at: float = 0.0
+
+
+def _load_knowledge(force: bool = False) -> list[dict]:
+    """Charge tous les .txt et .md du dossier knowledge/."""
+    global _knowledge_cache, _knowledge_loaded_at
+    now = datetime.now().timestamp()
+    # Recharge au maximum toutes les 30 secondes (ou si forcé)
+    if not force and _knowledge_cache and (now - _knowledge_loaded_at) < 30:

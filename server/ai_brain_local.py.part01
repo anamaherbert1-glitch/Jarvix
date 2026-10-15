@@ -1,0 +1,40 @@
+        return _knowledge_cache
+
+    docs = []
+    if not KNOWLEDGE_DIR.exists():
+        KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+        return docs
+
+    for path in sorted(KNOWLEDGE_DIR.rglob("*")):
+        if path.suffix.lower() not in {".txt", ".md"}:
+            continue
+        if path.name.upper().startswith("README"):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore").strip()
+            if len(text) < 10:
+                continue
+            docs.append({
+                "name": path.name,
+                "path": str(path.relative_to(KNOWLEDGE_DIR)),
+                "content": text,
+                "lower": text.lower(),
+            })
+        except Exception:
+            continue
+
+    _knowledge_cache = docs
+    _knowledge_loaded_at = now
+    return docs
+
+
+def search_knowledge(query: str, max_results: int = 3) -> list[dict]:
+    """Recherche simple par mots-clés dans les documents locaux."""
+    docs = _load_knowledge()
+    if not docs:
+        return []
+
+    words = [w for w in re.findall(r"\w+", query.lower()) if len(w) > 2]
+    if not words:
+        return []
+
