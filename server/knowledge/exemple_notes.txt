@@ -1,0 +1,19 @@
+# Notes personnelles pour JARVIX
+
+## Projet JARVIX
+JARVIX est mon assistant personnel Android avec cerveau IA local.
+Il fonctionne sans API externe.
+Le serveur tourne sur mon PC avec Python.
+
+## Preferences
+- Langue : francais
+- Style : clair, direct, utile
+- Je prefere les reponses structurees en etapes
+
+## Rappels
+- Toujours verifier le Wi-Fi avant de lancer le serveur
+- Le token JARVIX_TOKEN doit faire au moins 24 caracteres
+- Placer les documents importants dans le dossier knowledge/
+
+## Contacts utiles
+- Support technique : a definir

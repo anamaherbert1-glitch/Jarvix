@@ -1,0 +1,6 @@
+# JARVIX PC — micro, voix, recherche
+pyttsx3>=2.90
+SpeechRecognition>=3.10
+ddgs>=9.0
+# Micro (Windows : parfois besoin de pipwin install pyaudio)
+pyaudio>=0.2.13
