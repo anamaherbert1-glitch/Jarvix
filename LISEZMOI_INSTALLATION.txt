@@ -1,0 +1,26 @@
+========================================
+  JARVIX - Comment installer (PC)
+========================================
+
+METHODE SIMPLE (recommandee)
+----------------------------
+1. Decompresse le ZIP
+2. Double-clique sur :  LANCER_JARVIX.bat
+3. Si Python manque, le script t'ouvre le site pour l'installer
+4. La fenetre RESTE OUVERTE
+
+METHODE INSTALLATION COMPLETE
+-----------------------------
+1. Double-clique sur :  INSTALLER_JARVIX.bat
+2. Appuie sur une touche quand demande
+3. Attends la fin (raccourci Bureau cree)
+
+SI LA FENETRE SE FERME TOUTE SEULE
+----------------------------------
+1. Clic droit sur le fichier .bat
+2. Ouvrir avec Invite de commandes
+3. Lis le message d'erreur affiche
+
+DESINSTALLATION
+---------------
+Double-clique DESINSTALLER_JARVIX.bat
