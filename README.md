@@ -1,27 +1,48 @@
-# JARVIX Android + local server
+# JARVIX
 
-Prototype Android natif : commandes vocales, réponses parlées, ouverture de quelques applications, sélection de fichiers et notifications après autorisation.
+Assistant personnel **PC** (interface graphique) + option Android.
 
-## Serveur téléphone
-1. Compile l'APK via GitHub Actions et installe-le.
-2. Mets les appareils sur le même Wi-Fi.
-3. Dans JARVIX, touche « DÉMARRER / ARRÊTER LE SERVEUR DU TÉLÉPHONE ».
-4. L'application affiche l'adresse locale et une clé Bearer. Garde cette clé privée.
-5. API : GET /health; POST /v1/command avec Authorization: Bearer <clé> et JSON {"command":"..."}.
+## Installation PC (recommandé)
 
-Le serveur Android est un prototype et ne fonctionne que tant que le processus de l'application reste actif. Android peut suspendre l'application en arrière-plan.
+1. Télécharge le dépôt (Code → Download ZIP) ou clone
+2. Décompresse
+3. Double-clique sur **`LANCER_JARVIX.bat`**
+4. Si besoin, lance d’abord **`DIAGNOSTIC.bat`**
 
-## Serveur ordinateur
-Le fichier server/server.py utilise Python standard. Installe Python 3 et définis une clé de 24 caractères minimum. Par défaut il écoute uniquement sur 127.0.0.1. Pour le réseau local de confiance, définis JARVIX_HOST=0.0.0.0 et limite les connexions avec le pare-feu. Ne l'expose pas directement à Internet.
+Installation complète (raccourci Bureau) : **`INSTALLER_JARVIX.bat`**
 
-## Connexions sociales officielles
-Le socle OAuth serveur et la documentation sont dans server/social_oauth.py et SOCIAL_INTEGRATIONS.md. Il utilise les pages OAuth officielles et chiffre les jetons stockés. Aucun compte n'est connecté automatiquement, aucun mot de passe social n'est demandé, et les actions de publication/messages ne sont pas encore exécutées par les adaptateurs API. Il faut configurer les applications développeur, les secrets et un domaine HTTPS; voir SOCIAL_INTEGRATIONS.md.
+### Prérequis
+- Python 3 : https://www.python.org/downloads/ (coche **Add python.exe to PATH**)
+- Internet pour la recherche web et la reconnaissance vocale
 
-## Cerveau IA
-Le backend comprend `server/ai_brain.py` : API de conversation protégée, clé IA conservée côté serveur, historique non stocké, et garde-fou qui signale les demandes d'actions sensibles. Configure `OPENAI_API_KEY` et `OPENAI_MODEL` dans les secrets de l'hébergement. Le cerveau n'est pas encore branché à l'interface Android; aucune publication ou aucun message social n'est exécuté. Voir `SOCIAL_INTEGRATIONS.md`.
+```bat
+cd server
+pip install pyttsx3 SpeechRecognition pyaudio ddgs
+python jarvix_gui.py
+```
 
-## Limites
-- Le serveur ordinateur et l'application Android ne sont pas encore reliés automatiquement.
-- Le serveur local reçoit les commandes mais n'exécute aucune commande système arbitraire.
-- Les permissions microphone, fichiers et notifications restent soumises aux autorisations Android.
-- Code en développement : vérifie GitHub Actions et teste sur appareil avant usage réel.
+### Fonctionnalités PC
+- Interface graphique (chat, boutons)
+- Cerveau IA local (`server/ai_brain_local.py`)
+- Apprentissage via fichiers dans `server/knowledge/`
+- Recherche web **Google** (prioritaire) + DuckDuckGo
+- Ouverture du navigateur
+- Micro + synthèse vocale
+- Commande **stop** pour couper la voix
+
+### Fichiers utiles
+| Fichier | Rôle |
+|---------|------|
+| `LANCER_JARVIX.bat` | Lance l’interface |
+| `DIAGNOSTIC.bat` | Vérifie Python et les modules |
+| `INSTALLER_JARVIX.bat` | Installe + raccourcis |
+| `server/jarvix_gui.py` | Interface graphique |
+| `server/jarvix_pc.py` | Mode terminal |
+| `server/voice_engine.py` | Micro + voix |
+| `server/web_tools.py` | Recherche Google / web |
+
+## Android (optionnel)
+Build APK via GitHub Actions : workflow **Build JARVIS APK**.
+
+## Licence / limites
+Prototype. Aucune action sensible automatique. La recherche web nécessite Internet.
